@@ -1,45 +1,5 @@
-# Copyright IBM Corp. All Rights Reserved.
-#
-# SPDX-License-Identifier: Apache-2.0
-#
-
-###############################################################################
-#
-#    Peer section
-#
-###############################################################################
 peer:
-
-    # The peer id provides a name for this peer instance and is used when
-    # naming docker resources.
-    id: jdoe
-
-    # The networkId allows for logical separation of networks and is used when
-    # naming docker resources.
     networkId: dev
-
-    # The Address at local network interface this Peer will listen on.
-    # By default, it will listen on all network interfaces
-    listenAddress: 0.0.0.0:7051
-
-    # The endpoint this peer uses to listen for inbound chaincode connections.
-    # If this is commented-out, the listen address is selected to be
-    # the peer's address (see below) with port 7052
-    # chaincodeListenAddress: 0.0.0.0:7052
-
-    # The endpoint the chaincode for this peer uses to connect to the peer.
-    # If this is not specified, the chaincodeListenAddress address is selected.
-    # And if chaincodeListenAddress is not specified, address is selected from
-    # peer address (see below). If specified peer address is invalid then it
-    # will fallback to the auto detected IP (local IP) regardless of the peer
-    # addressAutoDetect value.
-    # chaincodeAddress: 0.0.0.0:7052
-
-    # When used as peer config, this represents the endpoint to other peers
-    # in the same organization. For peers in other organization, see
-    # gossip.externalEndpoint for more info.
-    # When used as CLI config, this means the peer's endpoint to interact with
-    address: 0.0.0.0:7051
 
     # Whether the Peer should programmatically determine its address
     # This case is useful for docker containers.
@@ -96,12 +56,6 @@ peer:
 
     # Gossip related configuration
     gossip:
-        # Bootstrap set to initialize gossip with.
-        # This is a list of other peers that this peer reaches out to at startup.
-        # Important: The endpoints here have to be endpoints of peers in the same
-        # organization, because the peer would refuse connecting to these endpoints
-        # unless they are in the same organization as the peer.
-        bootstrap: 127.0.0.1:7051
 
         # NOTE: orgLeader and useLeaderElection parameters are mutual exclusive.
         # Setting both to true would result in the termination of the peer
@@ -350,19 +304,6 @@ peer:
             AltID:
             KeyIds:
 
-    # Path on the file system where peer will find MSP local configurations
-    # The path may be relative to FABRIC_CFG_PATH or an absolute path.
-    mspConfigPath: msp
-
-    # Identifier of the local MSP
-    # ----!!!!IMPORTANT!!!-!!!IMPORTANT!!!-!!!IMPORTANT!!!!----
-    # Deployers need to change the value of the localMspId string.
-    # In particular, the name of the local MSP ID of a peer needs
-    # to match the name of one of the MSPs in each of the channel
-    # that this peer is a member of. Otherwise this peer's messages
-    # will not be identified as valid by other nodes.
-    localMspId: SampleOrg
-
     # CLI common client config options
     client:
         # connection timeout
@@ -507,14 +448,6 @@ peer:
 #
 ###############################################################################
 vm:
-
-    # Endpoint of the vm management system.  For docker can be one of the following in general
-    # unix:///var/run/docker.sock
-    # http://localhost:2375
-    # https://localhost:2376
-    # If you utilize external chaincode builders and don't need the default Docker chaincode builder,
-    # the endpoint should be unconfigured so that the peer's Docker health checker doesn't get registered.
-    endpoint: unix:///var/run/docker.sock
 
     # settings for docker vms
     docker:

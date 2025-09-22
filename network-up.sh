@@ -25,7 +25,7 @@ export ORDERER_ADMIN_TLS_PRIVATE_KEY=${PWD}/organizations/ordererOrganizations/e
 
 function networkUp() {
   # cleanup the old instances
-  DOCKER_SOCK="${DOCKER_SOCK}" docker-compose -f compose/compose-test-net.yaml down --volumes --remove-orphans
+  DOCKER_SOCK="${DOCKER_SOCK}" docker-compose -f compose-test-net.yaml down --volumes --remove-orphans
   docker rm -f $(docker ps -aq --filter label=service=hyperledger-fabric) 2>/dev/null || true
   docker rm -f $(docker ps -aq --filter name='dev-peer*') 2>/dev/null || true
   docker kill "$(docker ps -q --filter name=ccaas)" 2>/dev/null || true
@@ -38,7 +38,7 @@ function networkUp() {
     cryptogen generate --config=./organizations/cryptogen/crypto-config-orderer.yaml --output="organizations"
   fi
 
-  DOCKER_SOCK="${DOCKER_SOCK}" docker-compose -f compose/compose-test-net.yaml up
+  DOCKER_SOCK="${DOCKER_SOCK}" docker-compose -f compose-test-net.yaml up
 }
 
 function setGlobals() {
