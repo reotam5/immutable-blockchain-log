@@ -27,6 +27,7 @@ export ORDERER_ADMIN_TLS_PRIVATE_KEY=${PWD}/organizations/ordererOrganizations/e
 
 function networkUp() {
   # cleanup the old instances
+  DOCKER_SOCK="${DOCKER_SOCK}" docker-compose -f compose/compose-test-net.yaml down --volumes --remove-orphans
   docker rm -f $(docker ps -aq --filter label=service=hyperledger-fabric) 2>/dev/null || true
   docker rm -f $(docker ps -aq --filter name='dev-peer*') 2>/dev/null || true
   docker kill "$(docker ps -q --filter name=ccaas)" 2>/dev/null || true
