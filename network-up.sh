@@ -12,9 +12,8 @@ export VERBOSE=false
 
 export CORE_PEER_TLS_ENABLED=true
 export ORDERER_CA=${ROOTDIR}/organizations/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem
-export PEER0_ORG1_CA=${ROOTDIR}/organizations/peerOrganizations/org1.example.com/tlsca/tlsca.org1.example.com-cert.pem
-export PEER0_ORG2_CA=${ROOTDIR}/organizations/peerOrganizations/org2.example.com/tlsca/tlsca.org2.example.com-cert.pem
-export PEER0_ORG3_CA=${ROOTDIR}/organizations/peerOrganizations/org3.example.com/tlsca/tlsca.org3.example.com-cert.pem
+export ORG1_CA=${ROOTDIR}/organizations/peerOrganizations/org1.example.com/tlsca/tlsca.org1.example.com-cert.pem
+export ORG2_CA=${ROOTDIR}/organizations/peerOrganizations/org2.example.com/tlsca/tlsca.org2.example.com-cert.pem
 
 CHANNEL_NAME="mychannel"
 DELAY="3"
@@ -46,16 +45,26 @@ function networkUp() {
 
 function setGlobals() {
   local USING_ORG=$1
+  local USING_PEER=$2
+
   if [ $USING_ORG -eq 1 ]; then
-    export CORE_PEER_TLS_ENBLED=true
+    export CORE_PEER_TLS_ENABLED=true
     export CORE_PEER_LOCALMSPID=Org1MSP
-    export CORE_PEER_TLS_ROOTCERT_FILE=$PEER0_ORG1_CA
+    export CORE_PEER_TLS_ROOTCERT_FILE=$ORG1_CA
     export CORE_PEER_MSPCONFIGPATH=${ROOTDIR}/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp
-    export CORE_PEER_ADDRESS=localhost:7051
+    
+    if [ $USING_PEER -eq 0 ]; then
+      export CORE_PEER_ADDRESS=localhost:7051
+    elif [ $USING_PEER -eq 1 ]; then
+      export CORE_PEER_ADDRESS=localhost:8051
+    elif [ $USING_PEER -eq 2 ]; then
+      export CORE_PEER_ADDRESS=localhost:10051
+    fi
+
   elif [ $USING_ORG -eq 2 ]; then
-    export CORE_PEER_TLS_ENBLED=true
+    export CORE_PEER_TLS_ENABLED=true
     export CORE_PEER_LOCALMSPID=Org2MSP
-    export CORE_PEER_TLS_ROOTCERT_FILE=$PEER0_ORG2_CA
+    export CORE_PEER_TLS_ROOTCERT_FILE=$ORG2_CA
     export CORE_PEER_MSPCONFIGPATH=${ROOTDIR}/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp
     export CORE_PEER_ADDRESS=localhost:9051
   fi
@@ -72,12 +81,20 @@ function createChannel() {
   # Create channel
   osnadmin channel join --channelID ${CHANNEL_NAME} --config-block ./channel-artifacts/${CHANNEL_NAME}.block -o localhost:7053 --ca-file "$ORDERER_CA" --client-cert "$ORDERER_ADMIN_TLS_SIGN_CERT" --client-key "$ORDERER_ADMIN_TLS_PRIVATE_KEY"
 
-  # Join org1 peer to the channel
-  setGlobals 1
+  # Join org1 peer 0 to the channel
+  setGlobals 1 0
+  peer channel join -b $BLOCKFILE
+
+  # Join org1 peer 1 to the channel
+  setGlobals 1 1
+  peer channel join -b $BLOCKFILE
+
+  # Join org1 peer 2 to the channel
+  setGlobals 1 2
   peer channel join -b $BLOCKFILE
 
   # Join org2peer to the channel
-  setGlobals 2
+  setGlobals 2 0
   peer channel join -b $BLOCKFILE
 }
 
@@ -93,15 +110,23 @@ function deployCC() {
   PACKAGE_ID=$(peer lifecycle chaincode calculatepackageid chaincode.tar.gz)
 
   # install chaincode on peer0.org1
-  setGlobals 1
+  setGlobals 1 0
   peer lifecycle chaincode install chaincode.tar.gz
   
+  # install chaincode on peer1.org1
+  setGlobals 1 1
+  peer lifecycle chaincode install chaincode.tar.gz
+
+  # install chaincode on peer2.org1
+  setGlobals 1 2
+  peer lifecycle chaincode install chaincode.tar.gz
+
   # install chaincode on peer0.org2
-  setGlobals 2
+  setGlobals 2 0
   peer lifecycle chaincode install chaincode.tar.gz
   
   # approve chaincode for org1
-  setGlobals 1
+  setGlobals 1 0
   peer lifecycle chaincode approveformyorg \
     -o localhost:7050 \
     --ordererTLSHostnameOverride orderer.example.com \
@@ -114,7 +139,7 @@ function deployCC() {
     --sequence 1
 
   # approve chaincode for org2
-  setGlobals 2
+  setGlobals 2 0
   peer lifecycle chaincode approveformyorg \
     -o localhost:7050 \
     --ordererTLSHostnameOverride orderer.example.com \
@@ -136,13 +161,13 @@ function deployCC() {
     --version 1 \
     --sequence 1 \
     --peerAddresses localhost:7051 \
-    --tlsRootCertFiles $PEER0_ORG1_CA \
+    --tlsRootCertFiles $ORG1_CA \
     --peerAddresses localhost:9051 \
-    --tlsRootCertFiles $PEER0_ORG2_CA
+    --tlsRootCertFiles $ORG2_CA
 }
 
 function writeChaincode() {
-  setGlobals 1
+  setGlobals 1 0
 
   echo "submitting init transaction on peer0.org1..."
   peer chaincode invoke \
@@ -153,9 +178,9 @@ function writeChaincode() {
     -C $CHANNEL_NAME \
     -n $CHAINCODE_NAME \
     --peerAddresses localhost:7051 \
-    --tlsRootCertFiles $PEER0_ORG1_CA \
+    --tlsRootCertFiles $ORG1_CA \
     --peerAddresses localhost:9051 \
-    --tlsRootCertFiles $PEER0_ORG2_CA \
+    --tlsRootCertFiles $ORG2_CA \
     -c '{"function":"InitLedger","Args":[]}'
   
   sleep 5
@@ -177,9 +202,9 @@ function writeChaincode() {
     -C $CHANNEL_NAME \
     -n $CHAINCODE_NAME \
     --peerAddresses localhost:7051 \
-    --tlsRootCertFiles $PEER0_ORG1_CA \
+    --tlsRootCertFiles $ORG1_CA \
     --peerAddresses localhost:9051 \
-    --tlsRootCertFiles $PEER0_ORG2_CA \
+    --tlsRootCertFiles $ORG2_CA \
     -c '{"function":"TransferAsset","Args":["asset6","Christopher"]}'
   
   sleep 5
@@ -191,12 +216,70 @@ function writeChaincode() {
   
   sleep 5
 
-  setGlobals 2
+  setGlobals 2 0
   echo "querying chaincode on peer0.org2..."
   peer chaincode query \
     -C $CHANNEL_NAME \
     -n $CHAINCODE_NAME \
     -c '{"Args":["ReadAsset","asset6"]}'
+
+  sleep 5
+
+  setGlobals 1 1
+  echo "querying chaincode on peer1.org1..."
+  peer chaincode query \
+    -C $CHANNEL_NAME \
+    -n $CHAINCODE_NAME \
+    -c '{"Args":["ReadAsset","asset6"]}'
+  
+  echo "submitting transaction on peer1.org1..."
+  peer chaincode invoke \
+    -o localhost:7050 \
+    --ordererTLSHostnameOverride orderer.example.com \
+    --tls \
+    --cafile $ORDERER_CA \
+    -C $CHANNEL_NAME \
+    -n $CHAINCODE_NAME \
+    --peerAddresses localhost:7051 \
+    --tlsRootCertFiles $ORG1_CA \
+    --peerAddresses localhost:9051 \
+    --tlsRootCertFiles $ORG2_CA \
+    -c '{"function":"TransferAsset","Args":["asset6","asdfl"]}'
+  
+  sleep 5
+  
+  setGlobals 1 2
+  echo "querying chaincode on peer2.org1..."
+  peer chaincode query \
+    -C $CHANNEL_NAME \
+    -n $CHAINCODE_NAME \
+    -c '{"Args":["ReadAsset","asset6"]}'
+  
+  echo "submitting transaction on peer2.org1..."
+  peer chaincode invoke \
+    -o localhost:7050 \
+    --ordererTLSHostnameOverride orderer.example.com \
+    --tls \
+    --cafile $ORDERER_CA \
+    -C $CHANNEL_NAME \
+    -n $CHAINCODE_NAME \
+    --peerAddresses localhost:7051 \
+    --tlsRootCertFiles $ORG1_CA \
+    --peerAddresses localhost:9051 \
+    --tlsRootCertFiles $ORG2_CA \
+    -c '{"function":"TransferAsset","Args":["asset6","back"]}'
+
+
+  sleep 5
+
+  setGlobals 1 0
+  echo "querying chaincode on peer0.org2..."
+  peer chaincode query \
+    -C $CHANNEL_NAME \
+    -n $CHAINCODE_NAME \
+    -c '{"Args":["ReadAsset","asset6"]}'
+
+
 }
 
 #networkUp
