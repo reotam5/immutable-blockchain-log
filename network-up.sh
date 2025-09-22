@@ -7,7 +7,7 @@ DOCKER_SOCK="${SOCK##unix://}"
 
 ROOTDIR=$(cd "$(dirname "$0")" && pwd)
 export PATH=${ROOTDIR}/bin:$PATH
-export FABRIC_CFG_PATH=${PWD}/configtx
+export FABRIC_CFG_PATH=${PWD}/config
 export VERBOSE=false
 
 export CORE_PEER_TLS_ENABLED=true
