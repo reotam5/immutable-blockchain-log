@@ -1,0 +1,7 @@
+/bin
+/builders
+/organizations/ordererOrganizations
+/organizations/peerOrganizations
+/channel-artifacts
+/chaincode-go/vendor
+chaincode.tar.gz
