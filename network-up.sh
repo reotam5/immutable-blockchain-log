@@ -134,56 +134,10 @@ function deployCC() {
 }
 
 function writeChaincode() {
-  setGlobals 0
-
-  peer chaincode invoke \
-  -o localhost:7050 \
-  --ordererTLSHostnameOverride orderer.example.com \
-  --tls \
-  --cafile $ORDERER_CA \
-  -C $CHANNEL_NAME \
-  -n $CHAINCODE_NAME \
-  --peerAddresses localhost:7051 \
-  --tlsRootCertFiles $ORG1_CA \
-  -c '{"function":"CreateAsset", "Args":["blobPath", "hash", "source"]}'
+  ./add_entry.sh --blob-path "blobPath" --hash "hash" --source "source" --peer-address "localhost:7051" 
 
   sleep 5
-  
-  peer chaincode invoke \
-  -o localhost:7050 \
-  --ordererTLSHostnameOverride orderer.example.com \
-  --tls \
-  --cafile $ORDERER_CA \
-  -C $CHANNEL_NAME \
-  -n $CHAINCODE_NAME \
-  --peerAddresses localhost:7051 \
-  --tlsRootCertFiles $ORG1_CA \
-  -c '{"function":"CreateAsset", "Args":["blobPath", "hash", "source2"]}'
-
-  sleep 5
-
-  peer chaincode invoke \
-  -o localhost:7050 \
-  --ordererTLSHostnameOverride orderer.example.com \
-  --tls \
-  --cafile $ORDERER_CA \
-  -C $CHANNEL_NAME \
-  -n $CHAINCODE_NAME \
-  --peerAddresses localhost:7051 \
-  --tlsRootCertFiles $ORG1_CA \
-  -c '{"function":"GetAllAssets", "Args":[]}'
-  
-  sleep 5
-  peer chaincode invoke \
-  -o localhost:7050 \
-  --ordererTLSHostnameOverride orderer.example.com \
-  --tls \
-  --cafile $ORDERER_CA \
-  -C $CHANNEL_NAME \
-  -n $CHAINCODE_NAME \
-  --peerAddresses localhost:7051 \
-  --tlsRootCertFiles $ORG1_CA \
-  -c '{"function":"GetAssetsBySource", "Args":["source"]}'
+  ./read_entries.sh --source "source" --peer-address "localhost:7051"
 }
 
 #networkUp
