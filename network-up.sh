@@ -38,7 +38,7 @@ function networkUp() {
     cryptogen generate --config=./organizations/cryptogen/crypto-config-orderer.yaml --output="organizations"
   fi
 
-  DOCKER_SOCK="${DOCKER_SOCK}" docker-compose -f compose-test-net.yaml up
+  DOCKER_SOCK="${DOCKER_SOCK}" docker-compose -f compose-test-net.yaml up -d
 }
 
 function setGlobals() {
@@ -140,7 +140,8 @@ function writeChaincode() {
   ./read_entries.sh --source "source" --peer-address "localhost:7051"
 }
 
-#networkUp
-#createChannel
-#deployCC
-writeChaincode
+networkUp
+sleep 3
+
+createChannel
+deployCC
