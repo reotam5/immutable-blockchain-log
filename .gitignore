@@ -5,3 +5,4 @@
 /channel-artifacts
 /chaincode-go/vendor
 chaincode.tar.gz
+go.sum

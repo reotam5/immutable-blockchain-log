@@ -48,7 +48,7 @@ function setGlobals() {
   export CORE_PEER_LOCALMSPID=Org1MSP
   export CORE_PEER_TLS_ROOTCERT_FILE=$ORG1_CA
   export CORE_PEER_MSPCONFIGPATH=${ROOTDIR}/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp
-  
+
   if [ $USING_PEER -eq 0 ]; then
     export CORE_PEER_ADDRESS=localhost:7051
   elif [ $USING_PEER -eq 1 ]; then
@@ -90,13 +90,13 @@ function deployCC() {
 
   # package chaincode
   peer lifecycle chaincode package chaincode.tar.gz --path ./chaincode-go --lang golang --label chaincode
-  
+
   PACKAGE_ID=$(peer lifecycle chaincode calculatepackageid chaincode.tar.gz)
 
   # install chaincode on peer0.org1
   setGlobals 0
   peer lifecycle chaincode install chaincode.tar.gz
-  
+
   # install chaincode on peer1.org1
   setGlobals 1
   peer lifecycle chaincode install chaincode.tar.gz
@@ -105,7 +105,6 @@ function deployCC() {
   setGlobals 2
   peer lifecycle chaincode install chaincode.tar.gz
 
-  
   # approve chaincode
   setGlobals 1 0
   peer lifecycle chaincode approveformyorg \
@@ -131,13 +130,6 @@ function deployCC() {
     --sequence 1 \
     --peerAddresses localhost:7051 \
     --tlsRootCertFiles $ORG1_CA
-}
-
-function writeChaincode() {
-  ./add_entry.sh --blob-path "blobPath" --hash "hash" --source "source" --peer-address "localhost:7051" 
-
-  sleep 5
-  ./read_entries.sh --source "source" --peer-address "localhost:7051"
 }
 
 networkUp
