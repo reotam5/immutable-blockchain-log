@@ -8,7 +8,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 )
 
-func WatchFile(filePath string, processLine func(string)) {
+func WatchFile(filePath string, processLine func(string), stop chan struct{}) {
 	// Open the file
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -61,7 +61,8 @@ func WatchFile(filePath string, processLine func(string)) {
 			}
 		case err := <-watcher.Errors:
 			log.Println("error:", err)
+		case <-stop:
+			return
 		}
 	}
 }
-
