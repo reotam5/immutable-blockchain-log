@@ -81,6 +81,7 @@ The project is organized into the following key directories and files:
 - **Root Directory**: Contains setup scripts and configuration.
   - [`install_binary.sh`](install_binary.sh ): Installs Hyperledger Fabric binaries if not present.
   - [`network-up.sh`](network-up.sh ): Sets up the Fabric network, creates channels, and deploys chaincode.
+  - [`logger-up.sh`](logger-up.sh): Builds and run API gateway as well as frontend dashboard concurrently.
   - [`compose-test-net.yaml`](compose-test-net.yaml ): Docker Compose configuration for the network.
   - [`config`](config ): Fabric configuration files (e.g., [`configtx.yaml`](config/configtx.yaml ), [`core.yaml`](config/core.yaml )).
   - [`channel-artifacts`](channel-artifacts ): Generated channel artifacts (e.g., [`mychannel.block`](channel-artifacts/mychannel.block )).
