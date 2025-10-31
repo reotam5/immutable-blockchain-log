@@ -9,7 +9,7 @@ import (
 )
 
 func WatchFile(filePath string, processLine func(string), stop chan struct{}) {
-	// Open the file
+	// open the file
 	file, err := os.Open(filePath)
 	if err != nil {
 		log.Fatal(err)
@@ -20,7 +20,7 @@ func WatchFile(filePath string, processLine func(string), stop chan struct{}) {
 		}
 	}()
 
-	// Start reading from the end of file
+	// start reading from the end of file
 	info, _ := file.Stat()
 	_, err = file.Seek(info.Size(), 0)
 	if err != nil {
@@ -29,7 +29,7 @@ func WatchFile(filePath string, processLine func(string), stop chan struct{}) {
 
 	reader := bufio.NewReader(file)
 
-	// Setup fsnotify watcher
+	// setup fsnotify watcher
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		log.Fatal(err)

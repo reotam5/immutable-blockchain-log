@@ -3,9 +3,11 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"log-client/internal"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 )
@@ -18,6 +20,11 @@ func main() {
 	defer internal.CloseConnection()
 
 	r := gin.Default()
+	r.Use(cors.New(cors.Config{
+		AllowOrigins: []string{"*"},
+		AllowMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders: []string{"Origin", "Content-Type"},
+	}))
 
 	stop := make(chan struct{})
 
@@ -31,6 +38,13 @@ func main() {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
+		// check if path is valid file
+		_, err := os.Open(json.Path)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid file path"})
+			return
+		}
+
 		logPath = json.Path
 
 		// stop previous watcher and start new one
@@ -50,17 +64,24 @@ func main() {
 	r.GET("/log", func(c *gin.Context) {
 		filter := c.Query("filter")
 
-		logs, _, err := internal.ReadLogs(contract, filter)
+		logs, hashes, err := internal.ReadLogs(contract, filter)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
-		c.JSON(http.StatusOK, logs)
+		detailedLogs := []internal.DetailedLogEntry{}
+		for i := range logs {
+			logEntry := &logs[i]
+			detaildLogEntry, _ := logEntry.GetDetailedLogEntry(hashes[i])
+			detailedLogs = append(detailedLogs, *detaildLogEntry)
+		}
+
+		c.JSON(http.StatusOK, detailedLogs)
 	})
 
-	log.Println("Server starting on :8080")
-	r.Run(":8080")
+	log.Println("Server starting on :" + internal.PORT)
+	r.Run(":" + internal.PORT)
 }
 
 // go routine to watch file and write new lines to ledger

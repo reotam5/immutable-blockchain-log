@@ -12,6 +12,15 @@ type LogEntry struct {
 	ID        uint `gorm:"primaryKey"`
 	Content   string
 	Timestamp time.Time
+	Source    string
+}
+
+type DetailedLogEntry struct {
+	ID        uint
+	Content   string
+	Timestamp time.Time
+	IsValid   bool
+	Source    string
 }
 
 func (l LogEntry) Hash() (string, error) {
@@ -38,6 +47,21 @@ func (l LogEntry) Hash() (string, error) {
 	h := sha256.New()
 	h.Write([]byte(data))
 	return hex.EncodeToString(h.Sum(nil)), nil
+}
+
+func (l *LogEntry) GetDetailedLogEntry(hash string) (detailedLogEntry *DetailedLogEntry, err error) {
+	isValid, err := l.ValidateHash(hash)
+	if err != nil {
+		return nil, err
+	}
+	dle := DetailedLogEntry{
+		ID:        l.ID,
+		Content:   l.Content,
+		Timestamp: l.Timestamp,
+		Source:    l.Source,
+		IsValid:   isValid,
+	}
+	return &dle, nil
 }
 
 func (l *LogEntry) ValidateHash(hash string) (bool, error) {

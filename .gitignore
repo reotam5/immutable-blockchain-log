@@ -6,3 +6,5 @@
 /chaincode-go/vendor
 chaincode.tar.gz
 go.sum
+/log-client/gateway
+.DS_Store

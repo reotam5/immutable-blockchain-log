@@ -58,6 +58,7 @@ func WriteLog(contract *client.Contract, content string, clientID string) error 
 	var logEntry LogEntry
 	logEntry.Content = strings.TrimSpace(content)
 	logEntry.Timestamp = time.Now()
+	logEntry.Source = clientID
 	err := logEntry.WriteToDB()
 	if err != nil {
 		return err

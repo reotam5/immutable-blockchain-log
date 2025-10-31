@@ -1,6 +1,7 @@
 package internal
 
 const (
+	PORT          = "3001"
 	MspID         = "Org1MSP"
 	CryptoPath    = "../organizations/peerOrganizations/org1.example.com"
 	CertPath      = CryptoPath + "/users/User1@org1.example.com/msp/signcerts"
