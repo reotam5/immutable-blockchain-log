@@ -40,7 +40,8 @@ The web dashboard provides a user-friendly interface to interact with the blockc
 
 The dashboard automatically connects to the API gateway running on port 3001.
 
-### Writing Logs
+### Using Command Line (Deprecated - use web dashboard)
+#### Writing Logs
 
 1. Change to the log-client directory:
    ```sh
@@ -62,7 +63,7 @@ The dashboard automatically connects to the API gateway running on port 3001.
    ```
    This starts monitoring [`log-client/test.txt`](log-client/test.txt) for new lines. Each new line is written to the off-chain database and a corresponding asset (with hash) is created on the blockchain.
 
-### Reading Logs
+#### Reading Logs
 
 1. From the log-client directory, run the read-log command:
    ```sh
