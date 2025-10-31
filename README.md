@@ -7,6 +7,7 @@ This project implements an immutable log system using Hyperledger Fabric for on-
 - Go 1.23
 - Docker and Docker Compose
 - Hyperledger Fabric binaries (will be installed automatically by ./network-up.sh)
+- Node.js 23.9.0
 
 ## Setup
 
