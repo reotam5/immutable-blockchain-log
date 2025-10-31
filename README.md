@@ -18,7 +18,27 @@ This project implements an immutable log system using Hyperledger Fabric for on-
    ```
    This script will install binaries if needed, start the Fabric network, create a channel, and deploy the chaincode. Wait for it to complete (up to few minutes).
 
+3. Start the log dashboard and API gateway:
+   ```sh
+   ./logger-up.sh
+   ```
+   This script will:
+   - Build the log-client API gateway (backend)
+   - Install dependencies and build the log-dashboard (frontend)
+   - Start both the API gateway (port 3001) and the web dashboard (port 3000)
+   
+   Access the dashboard at `http://localhost:3000`
+
 ## Usage
+
+### Using the Web Dashboard
+
+The web dashboard provides a user-friendly interface to interact with the blockchain log system:
+
+1. **Settings**: Configure the log file path to monitor
+2. **Logs**: View all log entries with validation status
+
+The dashboard automatically connects to the API gateway running on port 3001.
 
 ### Writing Logs
 
@@ -73,6 +93,7 @@ The project is organized into the following key directories and files:
 
 - **log-client/**: Go client application for interacting with the blockchain and off-chain storage.
   - `cmd/`: Command-line interfaces.
+    - [`gateway/main.go`](log-client/cmd/gateway/main.go ): REST API gateway service using Gin framework. Provides HTTP endpoints for log management, file monitoring configuration, and log retrieval with validation.
     - [`write-log/main.go`](log-client/cmd/write-log/main.go ): Monitors a file for new lines, writes to PostgreSQL, and creates blockchain assets.
     - [`read-log/main.go`](log-client/cmd/read-log/main.go ): Retrieves and validates logs from blockchain and database.
   - `internal/`: Internal packages.
@@ -81,3 +102,10 @@ The project is organized into the following key directories and files:
     - [`log-entry.go`](log-client/internal/log-entry.go ): Defines [`LogEntry`](log-client/internal/log-entry.go ) struct with methods like [`Hash`](log-client/internal/log-entry.go ), [`ValidateHash`](log-client/internal/log-entry.go ), [`LoadFromDB`](log-client/internal/log-entry.go ), and [`WriteToDB`](log-client/internal/log-entry.go ).
     - [`utils.go`](log-client/internal/utils.go ): File watching utility with [`WatchFile`](log-client/internal/utils.go ).
     - [`constants.go`](log-client/internal/constants.go ): Constants for MSP ID, crypto paths, endpoints, etc.
+
+- **log-dashboard/**: React-based web dashboard for the log system.
+  - Built with Vite, TypeScript, and TanStack Router
+  - `src/`: Source code for the dashboard.
+    - `components/`: React components including dashboard, logs viewer, settings, and UI components.
+    - `routes/`: Page routes for navigation (dashboard, logs, settings).
+  - Provides a web interface to configure log monitoring, view logs, and monitor system activity.

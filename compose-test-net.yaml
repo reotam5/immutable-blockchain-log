@@ -195,7 +195,7 @@ services:
       POSTGRES_USER: testuser
       POSTGRES_PASSWORD: testpass
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
     ports:
       - "5432:5432"
     networks:

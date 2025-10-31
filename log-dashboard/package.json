@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "run-prod-frontend": "serve -s dist -l 3000",
+    "run-prod-backend": "cd ../log-client && ./gateway",
+    "run-prod": "concurrently \"npm run run-prod-frontend\" \"npm run run-prod-backend\""
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -28,11 +31,13 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@tabler/icons-react": "^3.35.0",
     "@tailwindcss/vite": "^4.1.16",
+    "@tanstack/react-query": "^5.90.5",
     "@tanstack/react-router": "^1.133.32",
     "@tanstack/react-router-devtools": "^1.133.32",
     "@tanstack/react-table": "^8.21.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "concurrently": "^9.2.1",
     "date-fns": "^4.1.0",
     "lucide-react": "^0.548.0",
     "next-themes": "^0.4.6",
@@ -40,6 +45,7 @@
     "react-day-picker": "^9.11.1",
     "react-dom": "^19.1.1",
     "recharts": "^2.15.4",
+    "serve": "^14.2.5",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^4.1.16",

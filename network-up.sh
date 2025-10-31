@@ -1,6 +1,6 @@
 #!/bin/bash
 
-./install_binary.sh
+./install-binary.sh
 
 SOCK="${DOCKER_HOST:-/var/run/docker.sock}"
 DOCKER_SOCK="${SOCK##unix://}"
@@ -63,27 +63,27 @@ function createChannel() {
     mkdir channel-artifacts
   fi
 
-  # Creates channel genesis block
+  # creates channel genesis block
   configtxgen -profile ChannelUsingRaft -outputBlock ./channel-artifacts/${CHANNEL_NAME}.block -channelID $CHANNEL_NAME
 
-  # Create channel
+  # create channel
   osnadmin channel join --channelID ${CHANNEL_NAME} --config-block ./channel-artifacts/${CHANNEL_NAME}.block -o localhost:7053 --ca-file "$ORDERER_CA" --client-cert "$ORDERER_ADMIN_TLS_SIGN_CERT" --client-key "$ORDERER_ADMIN_TLS_PRIVATE_KEY"
 
-  # Join peer 0 to the channel
+  # join peer 0 to the channel
   setGlobals 0
   peer channel join -b $BLOCKFILE
 
-  # Join peer 1 to the channel
+  # join peer 1 to the channel
   setGlobals 1
   peer channel join -b $BLOCKFILE
 
-  # Join peer 2 to the channel
+  # join peer 2 to the channel
   setGlobals 2
   peer channel join -b $BLOCKFILE
 }
 
 function deployCC() {
-  # Vendoring Go dependencies
+  # vendoring Go dependencies
   pushd ./chaincode-go
   GO111MODULE=on go mod vendor
   popd
