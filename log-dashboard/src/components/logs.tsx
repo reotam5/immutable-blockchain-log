@@ -1,6 +1,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { API_BASE_URL } from "@/constants";
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import LogFilters from "./log-filters";
 import { Button } from "./ui/button";
 
@@ -19,6 +20,12 @@ interface LogsResponse {
 
 
 function Logs() {
+  const [appliedFilters, setAppliedFilters] = useState<{
+    query?: string | null
+    startDate?: Date | null
+    endDate?: Date | null
+  }>({})
+
   const fetchLogs = async ({ pageParam = "" }): Promise<LogsResponse> => {
     const res = await fetch(`${API_BASE_URL}/log?filter=gateway-client&pageSize=10&bookmark=` + pageParam)
     return res.json()
@@ -39,7 +46,7 @@ function Logs() {
 
   return (
     <div className="max-w-7xl">
-      <LogFilters />
+      <LogFilters appliedFilters={appliedFilters} setAppliedFilters={setAppliedFilters} />
       <Table>
         <TableHeader>
           <TableRow>

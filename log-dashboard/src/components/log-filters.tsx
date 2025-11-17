@@ -10,28 +10,39 @@ import { useState } from "react"
 import { Label } from "./ui/label"
 import { Separator } from "./ui/separator"
 
-export default function LogFilters() {
+export default function LogFilters({ appliedFilters, setAppliedFilters }: {
+  appliedFilters: {
+    query?: string | null
+    startDate?: Date | null
+    endDate?: Date | null
+  }
+  setAppliedFilters: React.Dispatch<React.SetStateAction<{
+    query?: string | null
+    startDate?: Date | null
+    endDate?: Date | null
+  }>>
+}) {
   const [query, setQuery] = useState("")
   const [startDate, setStartDate] = useState<PickerValue>(null)
   const [endDate, setEndDate] = useState<PickerValue>(null)
 
-
-  const [appliedFilters, setAppliedFilters] = useState<{
-    query?: string | null
-    startDate?: Date | null
-    endDate?: Date | null
-  }>({})
-
   const style: SxProps<Theme> = {
+    width: '100%',
+    '& .MuiInputBase-root': {
+      height: '36px',
+    },
+    '& .MuiFormLabel-root': {
+      top: '-6px',
+    },
+    '& .MuiInputLabel-shrink': {
+      transform: 'translate(14px, -2px) scale(0.75)'
+    },
     '.MuiPickersTextField-root': {
       height: '36px',
     },
     '& .MuiPickersInputBase-root': {
       height: '36px',
     },
-    '& .MuiFormLabel-root': {
-      top: '-6px',
-    }
   }
 
   return (
@@ -45,15 +56,7 @@ export default function LogFilters() {
             label="Search logs..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            sx={{
-              width: '100%',
-              '& .MuiInputBase-root': {
-                height: '36px',
-              },
-              '& .MuiFormLabel-root': {
-                top: '-6px',
-              }
-            }}
+            sx={style}
           />
         </div>
 
