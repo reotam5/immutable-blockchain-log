@@ -1,6 +1,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { API_BASE_URL } from "@/constants";
 import { useInfiniteQuery } from "@tanstack/react-query";
+import LogFilters from "./log-filters";
 import { Button } from "./ui/button";
 
 interface Log {
@@ -38,6 +39,7 @@ function Logs() {
 
   return (
     <div className="max-w-7xl">
+      <LogFilters />
       <Table>
         <TableHeader>
           <TableRow>
