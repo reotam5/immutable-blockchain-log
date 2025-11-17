@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 	"github.com/hyperledger/fabric-contract-api-go/v2/contractapi"
 )
 
@@ -24,19 +26,36 @@ type Asset struct {
 	Timestamp string `json:"Timestamp"`
 }
 
+type PaginatedQueryResult struct {
+	Records             []*Asset `json:"records"`
+	FetchedRecordsCount int32    `json:"fetchedRecordsCount"`
+	Bookmark            string   `json:"bookmark"`
+	HasNextPage         bool     `json:"hasNextPage"`
+}
+
 // CreateAsset issues a new asset to the world state with given details.
 func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface, blobPath string, hash string, source string) error {
-	logId := ctx.GetStub().GetTxID()
-	exists, err := s.AssetExists(ctx, logId)
+	txTime, err := ctx.GetStub().GetTxTimestamp()
+	if err != nil {
+		return err
+	}
+
+	// create unique key based on timestamp and uuid (using timestamp to help with ordering)
+	ts := time.Unix(txTime.Seconds, int64(txTime.Nanos)).UTC()
+	timestampStr := ts.Format("20060102T150405Z")
+	id := uuid.New().String()
+	key := fmt.Sprintf("asset:%s:%s", timestampStr, id)
+
+	exists, err := assetExists(ctx, key)
 	if err != nil {
 		return err
 	}
 	if exists {
-		return fmt.Errorf("the asset %s already exists", logId)
+		return fmt.Errorf("the asset %s already exists", key)
 	}
 
 	asset := Asset{
-		LogID:     logId,
+		LogID:     key,
 		BlobPath:  blobPath,
 		Hash:      hash,
 		Source:    source,
@@ -48,11 +67,11 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface,
 		return err
 	}
 
-	return ctx.GetStub().PutState(logId, assetJSON)
+	return ctx.GetStub().PutState(key, assetJSON)
 }
 
 // AssetExists returns true when asset with given ID exists in world state
-func (s *SmartContract) AssetExists(ctx contractapi.TransactionContextInterface, id string) (bool, error) {
+func assetExists(ctx contractapi.TransactionContextInterface, id string) (bool, error) {
 	assetJSON, err := ctx.GetStub().GetState(id)
 	if err != nil {
 		return false, fmt.Errorf("failed to read from world state: %v", err)
@@ -85,6 +104,69 @@ func (s *SmartContract) GetAllAssets(ctx contractapi.TransactionContextInterface
 		if sourceFilter == "" || asset.Source == sourceFilter {
 			assets = append(assets, &asset)
 		}
+	}
+
+	return assets, nil
+}
+
+func (s *SmartContract) GetAssetsWithFilter(ctx contractapi.TransactionContextInterface, source string, pageSize int, bookmark string) (*PaginatedQueryResult, error) {
+	query := fmt.Sprintf(`{
+			"selector": {
+					"Source": "%s"
+			}
+		}`, source)
+	resultsIterator, responseMetadata, err := ctx.GetStub().GetQueryResultWithPagination(query, int32(pageSize), bookmark)
+	if err != nil {
+		return nil, nil
+	}
+	defer resultsIterator.Close()
+
+	assets, err := constructQueryResponseFromIterator(resultsIterator)
+	if err != nil {
+		return nil, nil
+	}
+
+	hasNextPage := false
+	if responseMetadata.Bookmark != "nil" {
+		_, nextPageResponseMetadata, err := ctx.GetStub().GetQueryResultWithPagination(query, int32(1), responseMetadata.Bookmark)
+		if err != nil {
+			return nil, nil
+		}
+		if nextPageResponseMetadata.FetchedRecordsCount > 0 {
+			hasNextPage = true
+		}
+	}
+
+	if assets == nil {
+		return &PaginatedQueryResult{
+			Records:             []*Asset{},
+			FetchedRecordsCount: responseMetadata.FetchedRecordsCount,
+			Bookmark:            responseMetadata.Bookmark,
+			HasNextPage:         hasNextPage,
+		}, nil
+	} else {
+		return &PaginatedQueryResult{
+			Records:             assets,
+			FetchedRecordsCount: responseMetadata.FetchedRecordsCount,
+			Bookmark:            responseMetadata.Bookmark,
+			HasNextPage:         hasNextPage,
+		}, nil
+	}
+}
+
+func constructQueryResponseFromIterator(resultsIterator shim.StateQueryIteratorInterface) ([]*Asset, error) {
+	var assets []*Asset
+	for resultsIterator.HasNext() {
+		queryResult, err := resultsIterator.Next()
+		if err != nil {
+			return nil, err
+		}
+		var asset Asset
+		err = json.Unmarshal(queryResult.Value, &asset)
+		if err != nil {
+			return nil, err
+		}
+		assets = append(assets, &asset)
 	}
 
 	return assets, nil

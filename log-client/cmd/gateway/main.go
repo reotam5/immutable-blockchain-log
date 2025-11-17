@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 
 	"log-client/internal"
 
@@ -63,8 +64,19 @@ func main() {
 	// read logs from chain
 	r.GET("/log", func(c *gin.Context) {
 		filter := c.Query("filter")
+		pageSize := c.Query("pageSize")
+		bookmark := c.Query("bookmark")
 
-		logs, hashes, err := internal.ReadLogs(contract, filter)
+		if pageSize == "" {
+			pageSize = "10"
+		}
+
+		pageSizeInt, err := strconv.Atoi(pageSize)
+		if err != nil || pageSizeInt <= 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid pageSize"})
+		}
+
+		logs, hashes, bookmark, hasNextPage, err := internal.ReadLogsWithPagination(contract, filter, pageSizeInt, bookmark)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -77,7 +89,18 @@ func main() {
 			detailedLogs = append(detailedLogs, *detaildLogEntry)
 		}
 
-		c.JSON(http.StatusOK, detailedLogs)
+		type Response struct {
+			Logs        []internal.DetailedLogEntry `json:"logs"`
+			Bookmark    string                      `json:"bookmark"`
+			HasNextPage bool                        `json:"hasNextPage"`
+		}
+		response := Response{
+			Logs:        detailedLogs,
+			Bookmark:    bookmark,
+			HasNextPage: hasNextPage,
+		}
+
+		c.JSON(http.StatusOK, response)
 	})
 
 	log.Println("Server starting on :" + internal.PORT)

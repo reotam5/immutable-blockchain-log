@@ -19,6 +19,13 @@ type rawChain struct {
 	Timestamp string `json:"Timestamp"`
 }
 
+type rawPaginatedResult struct {
+	Records             []*rawChain `json:"records"`
+	FetchedRecordsCount int32       `json:"fetchedRecordsCount"`
+	Bookmark            string      `json:"bookmark"`
+	HasNextPage         bool        `json:"hasNextPage"`
+}
+
 func ReadLogs(contract *client.Contract, clientFilter string) ([]LogEntry, []string, error) {
 	evaluateResult, err := contract.EvaluateTransaction("GetAllAssets", clientFilter)
 	if err != nil {
@@ -81,4 +88,30 @@ func WriteLog(contract *client.Contract, content string, clientID string) error 
 	}
 
 	return nil
+}
+
+func ReadLogsWithPagination(contract *client.Contract, clientFilter string, pageSize int, bookmark string) ([]LogEntry, []string, string, bool, error) {
+	evaluateResult, err := contract.EvaluateTransaction("GetAssetsWithFilter", clientFilter, strconv.Itoa(pageSize), bookmark)
+	if err != nil {
+		return nil, nil, "", false, err
+	}
+
+	var rawPaginatedResult rawPaginatedResult
+	if err := json.Unmarshal([]byte(evaluateResult), &rawPaginatedResult); err != nil {
+		return nil, nil, "", false, err
+	}
+
+	var logEntries []LogEntry
+	var hashes []string
+
+	// print out raw chain in nice format
+	for _, entry := range rawPaginatedResult.Records {
+		var logEntry LogEntry
+		dbId, _ := strconv.Atoi(entry.BlobPath)
+		_ = logEntry.LoadFromDB(uint(dbId))
+		logEntries = append(logEntries, logEntry)
+		hashes = append(hashes, entry.Hash)
+	}
+
+	return logEntries, hashes, rawPaginatedResult.Bookmark, rawPaginatedResult.HasNextPage, nil
 }

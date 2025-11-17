@@ -3,26 +3,42 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
 
 	"log-client/internal"
 )
 
 func main() {
 	clientFilter := ""
+	pageSize := 10
+	bookmark := ""
 	if len(os.Args) >= 2 {
 		clientFilter = os.Args[1]
+	}
+
+	if len(os.Args) >= 3 {
+		num, err := strconv.Atoi(os.Args[2])
+		if err == nil {
+			pageSize = num
+		}
+	}
+
+	if len(os.Args) >= 4 {
+		bookmark = os.Args[3]
 	}
 
 	// get smart contract connection
 	_, _, contract := internal.GetConnection()
 	defer internal.CloseConnection()
 
-	logs, hashes, err := internal.ReadLogs(contract, clientFilter)
+	logs, hashes, new_bookmark, hasNextPage, err := internal.ReadLogsWithPagination(contract, clientFilter, pageSize, bookmark)
 
 	if err != nil {
 		panic(fmt.Errorf("failed to read logs: %w", err))
 	}
 
+	fmt.Printf("Next Bookmark: %s\n", new_bookmark)
+	fmt.Printf("Has Next Page: %t\n", hasNextPage)
 	for i, logEntry := range logs {
 		valid, _ := logEntry.ValidateHash(hashes[i])
 
