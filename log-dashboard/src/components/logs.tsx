@@ -41,10 +41,10 @@ function Logs() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Timestamp</TableHead>
-            <TableHead>Content</TableHead>
-            <TableHead>Verified</TableHead>
-            <TableHead>Client</TableHead>
+            <TableHead className="w-[500px]">Content</TableHead>
+            <TableHead className="w-[100px]">Verified</TableHead>
+            <TableHead className="w-[100px]">Client</TableHead>
+            <TableHead className="w-[100px]">Timestamp</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -59,23 +59,29 @@ function Logs() {
               </div>
             ) : (
               data?.pages?.flatMap(page => page.logs)?.map((log, index) => (
-                <TableRow key={index}>
-                  <TableCell>{new Date(log.Timestamp).toLocaleString()}</TableCell>
+                <TableRow key={index} className={log.IsValid ? undefined : 'bg-red-100/60 hover:bg-red-200/70'}>
                   <TableCell>{log.Content}</TableCell>
                   <TableCell>{log.IsValid ? 'Yes' : 'No'}</TableCell>
                   <TableCell>{log.Source}</TableCell>
+                  <TableCell>{new Date(log.Timestamp).toLocaleString()}</TableCell>
                 </TableRow>
               ))
             )
           )}
         </TableBody>
       </Table>
-      <div>
-        <Button disabled={isFetchingNextPage || !hasNextPage} onClick={() => {
-          fetchNextPage()
-        }}>
-          Load More
-        </Button>
+      <div className="flex flex-row justify-between items-center mt-5">
+        <div>
+          <Button disabled={isFetchingNextPage || !hasNextPage} onClick={() => {
+            fetchNextPage()
+          }}>
+            Load More
+          </Button>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="w-4 h-4 rounded-sm bg-red-200 border" aria-hidden="true" />
+          <div className="text-sm text-muted-foreground">Red rows are invalid</div>
+        </div>
       </div>
     </div>
   );
