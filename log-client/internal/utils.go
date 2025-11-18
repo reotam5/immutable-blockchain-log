@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"log"
 	"os"
+	"time"
 
 	"github.com/fsnotify/fsnotify"
 )
@@ -65,4 +66,18 @@ func WatchFile(filePath string, processLine func(string), stop chan struct{}) {
 			return
 		}
 	}
+}
+
+func ParseDate(s string) (*time.Time, error) {
+	if s == "" {
+		return nil, nil
+	}
+	t, err := time.Parse(time.RFC3339, s)
+
+	if err != nil {
+		return nil, err
+	}
+
+	u := t.UTC()
+	return &u, nil
 }

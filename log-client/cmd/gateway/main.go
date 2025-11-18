@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
+	"time"
 
 	"log-client/internal"
 
@@ -63,9 +65,13 @@ func main() {
 
 	// read logs from chain
 	r.GET("/log", func(c *gin.Context) {
-		filter := c.Query("filter")
+		source := c.Query("source")
 		pageSize := c.Query("pageSize")
 		bookmark := c.Query("bookmark")
+
+		query := c.Query("query")
+		startDate := c.Query("startDate")
+		endDate := c.Query("endDate")
 
 		if pageSize == "" {
 			pageSize = "10"
@@ -76,7 +82,66 @@ func main() {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid pageSize"})
 		}
 
-		logs, hashes, bookmark, hasNextPage, err := internal.ReadLogsWithPagination(contract, filter, pageSizeInt, bookmark)
+		var logs []internal.LogEntry
+		var hashes []string
+		var hasNextPage bool
+
+		if query != "" || startDate != "" || endDate != "" {
+			logs, hashes, err = internal.ReadLogs(contract, source)
+			hasNextPage = false
+
+			var startT *time.Time
+			var endT *time.Time
+
+			if startDate != "" {
+				t, err := internal.ParseDate(startDate)
+				if err != nil {
+					c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+					return
+				}
+				startT = t
+			}
+
+			if endDate != "" {
+				t, err := internal.ParseDate(endDate)
+				if err != nil {
+					c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+					return
+				}
+				endT = t
+			}
+
+			// filter logs and hashes (keep indexes aligned)
+			filteredLogs := []internal.LogEntry{}
+			filteredHashes := []string{}
+			q := strings.ToLower(strings.TrimSpace(query))
+			for i, le := range logs {
+				// date filtering
+				if startT != nil && le.Timestamp.UTC().Before(*startT) {
+					continue
+				}
+				if endT != nil && le.Timestamp.UTC().After(*endT) {
+					continue
+				}
+
+				// query filtering (match content or source, case-insensitive)
+				if q != "" {
+					content := strings.ToLower(le.Content)
+					if !strings.Contains(content, q) {
+						continue
+					}
+				}
+
+				filteredLogs = append(filteredLogs, le)
+				filteredHashes = append(filteredHashes, hashes[i])
+			}
+
+			logs = filteredLogs
+			hashes = filteredHashes
+			bookmark = ""
+		} else {
+			logs, hashes, bookmark, hasNextPage, err = internal.ReadLogsWithPagination(contract, source, pageSizeInt, bookmark)
+		}
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return

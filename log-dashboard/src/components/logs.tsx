@@ -26,9 +26,13 @@ function Logs() {
     endDate?: Date | null
   }>({})
 
-  const fetchLogs = async ({ pageParam = "" }): Promise<LogsResponse> => {
-    const res = await fetch(`${API_BASE_URL}/log?filter=gateway-client&pageSize=10&bookmark=` + pageParam)
-    return res.json()
+
+
+  // Create a stable filters key so that changing filters changes the query cache key
+  const filtersKey = {
+    query: appliedFilters.query ?? null,
+    startDate: appliedFilters.startDate ? appliedFilters.startDate.toISOString() : null,
+    endDate: appliedFilters.endDate ? appliedFilters.endDate.toISOString() : null,
   }
 
   const {
@@ -39,9 +43,20 @@ function Logs() {
     isFetchingNextPage,
   } = useInfiniteQuery({
     initialPageParam: "",
-    queryKey: ['logs'],
-    queryFn: fetchLogs,
-    getNextPageParam: (lastPage) => lastPage.hasNextPage ? lastPage.bookmark : null,
+    queryKey: ['logs', filtersKey],
+    queryFn: async ({ pageParam = "" }: { pageParam?: string }) => {
+      const params = new URLSearchParams()
+      params.append('source', 'gateway-client')
+      params.append('pageSize', '10')
+      if (pageParam) params.append('bookmark', String(pageParam))
+      if (filtersKey.query) params.append('query', String(filtersKey.query))
+      if (filtersKey.startDate) params.append('startDate', String(filtersKey.startDate))
+      if (filtersKey.endDate) params.append('endDate', String(filtersKey.endDate))
+
+      const res = await fetch(`${API_BASE_URL}/log?` + params.toString())
+      return res.json()
+    },
+    getNextPageParam: (lastPage: LogsResponse) => lastPage.hasNextPage ? lastPage.bookmark : null,
   })
 
   return (
@@ -67,7 +82,7 @@ function Logs() {
                 No logs found
               </div>
             ) : (
-              data?.pages?.flatMap(page => page.logs)?.map((log, index) => (
+              data?.pages?.flatMap(page => (page as LogsResponse).logs)?.map((log, index) => (
                 <TableRow key={index} className={log.IsValid ? undefined : 'bg-red-100/60 hover:bg-red-200/70'}>
                   <TableCell>{log.Content}</TableCell>
                   <TableCell>{log.IsValid ? 'Yes' : 'No'}</TableCell>
